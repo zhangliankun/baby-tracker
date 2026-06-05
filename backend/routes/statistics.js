@@ -5,7 +5,9 @@ const { authMiddleware } = require('../middleware/auth');
 const router = express.Router();
 router.use(authMiddleware);
 
-const VALID_ROLES = ['爸爸', '妈妈', '奶奶', '爷爷', '外婆', '其他'];
+const safeParse = (json) => {
+  try { return JSON.parse(json); } catch (e) { console.error('[Statistics] JSON parse error:', e.message); return null; }
+};
 
 /**
  * GET /api/statistics
@@ -78,7 +80,7 @@ router.get('/', async (req, res) => {
     const dailyFeedingMap = {}; // date -> {formula: xx, breast: xx, bottle_breast: xx}
 
     for (const r of feedingRecords) {
-      const d = JSON.parse(r.data_json);
+      const d = safeParse(r.data_json);
       const dayKey = new Date(r.timestamp).toISOString().split('T')[0];
       if (!dailyFeedingMap[dayKey]) dailyFeedingMap[dayKey] = { formula: 0, breast: 0, bottle_breast: 0 };
 
@@ -102,8 +104,8 @@ router.get('/', async (req, res) => {
     const dailySleepMap = {};
 
     for (const r of sleepRecords) {
-      const d = JSON.parse(r.data_json);
-      const minutes = d.durationMinutes || 0;
+      const d = safeParse(r.data_json);
+      const minutes = d && d.durationMinutes || 0;
       sleepTotalMinutes += minutes;
       const dayKey = new Date(r.timestamp).toISOString().split('T')[0];
       dailySleepMap[dayKey] = (dailySleepMap[dayKey] || 0) + minutes;
@@ -129,8 +131,8 @@ router.get('/', async (req, res) => {
 
     for (const r of diaperRecords) {
       diaperTotalCount++;
-      const d = JSON.parse(r.data_json);
-      if (d.poop) {
+      const d = safeParse(r.data_json);
+      if (d && d.poop) {
         poopCount++;
         if (d.poopColor) {
           poopColorDist[d.poopColor] = (poopColorDist[d.poopColor] || 0) + 1;
@@ -139,14 +141,14 @@ router.get('/', async (req, res) => {
           poopShapeDist[d.poopShape] = (poopShapeDist[d.poopShape] || 0) + 1;
         }
       }
-      if (d.redButt) redButtCount++;
+      if (d && d.redButt) redButtCount++;
     }
 
     // 准确计算 pee 次数
     let actualPeeCount = 0;
     for (const r of diaperRecords) {
-      const d = JSON.parse(r.data_json);
-      if (d.pee) actualPeeCount++;
+      const d = safeParse(r.data_json);
+      if (d && d.pee) actualPeeCount++;
     }
 
     // --- 补剂统计 ---
@@ -158,7 +160,7 @@ router.get('/', async (req, res) => {
     const suppByName = {};
     let supplementTotalCount = 0;
     for (const r of supplementRecords) {
-      const d = JSON.parse(r.data_json);
+      const d = safeParse(r.data_json);
       // 支持新旧两种格式：旧 {name,dose} 和 新 {supplements:[],remark}
       if (d.supplements && Array.isArray(d.supplements)) {
         for (const s of d.supplements) {
@@ -188,7 +190,7 @@ router.get('/', async (req, res) => {
     const solidFoodDays = new Set();
 
     for (const r of solidFoodRecords) {
-      const d = JSON.parse(r.data_json);
+      const d = safeParse(r.data_json);
       solidFoodTotalCount++;
       const dayKey = new Date(r.timestamp).toISOString().split('T')[0];
       solidFoodDays.add(dayKey);
@@ -196,13 +198,13 @@ router.get('/', async (req, res) => {
       const name = (d.foodName || '').trim();
       if (name) solidFoodByName[name] = (solidFoodByName[name] || 0) + 1;
 
-      if (d.allergy && d.allergy.foods && d.allergy.foods.length > 0) {
+      if (d && d.allergy && d.allergy.foods && d.allergy.foods.length > 0) {
         solidFoodAllergyCount++;
         for (const f of d.allergy.foods) {
           const key = f.trim();
           if (key) solidFoodAllergyFoods[key] = (solidFoodAllergyFoods[key] || 0) + 1;
         }
-        if (d.allergy.symptoms) {
+        if (d && d.allergy.symptoms) {
           for (const s of d.allergy.symptoms) {
             const key = s.trim();
             if (key) solidFoodAllergySymptoms[key] = (solidFoodAllergySymptoms[key] || 0) + 1;
@@ -256,5 +258,10 @@ router.get('/', async (req, res) => {
         },
       },
     });
+  } catch (err) {
+    console.error('[Statistics] 查询错误:', err);
+    return res.status(500).json({ success: false, error: '服务器内部错误' });
+  }
+});
 
 module.exports = router;

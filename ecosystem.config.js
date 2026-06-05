@@ -20,8 +20,9 @@ module.exports = {
 
       // 重启策略
       autorestart: true,
-      max_restarts: 10,
+      max_restarts: 50,
       restart_delay: 5000,
+      kill_timeout: 10000,
 
       // 环境变量
       env: {

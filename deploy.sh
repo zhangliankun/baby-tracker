@@ -2,17 +2,25 @@
 # ===============================================
 # 婴儿喂养记录 App — 一键部署脚本
 # 适用环境：Ubuntu 22.04, 2c1g
-# 用法：chmod +x deploy.sh && sudo ./deploy.sh
+# 用法：chmod +x deploy.sh && bash deploy.sh
+#       （不要用 sudo ./deploy.sh，sudo 会导致文件权限错误）
 # ===============================================
 
 set -e
 
 APP_DIR="/opt/baby-tracker"
-NODE_VERSION="18"
+NODE_VERSION="22"
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 RED='\033[0;31m'
-NC='\033[0m' # No Color
+NC='\033[0m'
+
+# 检查是否为 root 用户
+if [ "$EUID" -eq 0 ]; then
+  echo -e "${RED}错误：请不要用 root 或 sudo 运行此脚本。${NC}"
+  echo "改用: bash deploy.sh"
+  exit 1
+fi
 
 echo -e "${GREEN}"
 echo "====================================="
@@ -26,7 +34,7 @@ sudo apt update && sudo apt upgrade -y
 
 # ---- 2. 安装基础工具 ----
 echo -e "${YELLOW}[2/8] 安装基础工具...${NC}"
-sudo apt install -y curl git nginx sqlite3 certbot python3-certbot-nginx
+sudo apt install -y curl git nginx sqlite3
 
 # ---- 3. 安装 Node.js ----
 echo -e "${YELLOW}[3/8] 安装 Node.js ${NODE_VERSION}...${NC}"
@@ -44,23 +52,26 @@ if ! command -v pm2 &> /dev/null; then
 fi
 echo "PM2 $(pm2 -v)"
 
-# ---- 5. 创建目录 ----
-echo -e "${YELLOW}[5/8] 创建应用目录...${NC}"
-sudo mkdir -p "$APP_DIR"
+# ---- 5. 克隆代码 ----
+echo -e "${YELLOW}[5/8] 获取最新代码...${NC}"
+if [ -d "$APP_DIR/.git" ]; then
+    echo "更新已有仓库..."
+    cd "$APP_DIR" && git pull origin master
+else
+    if [ -d "$APP_DIR" ]; then
+        echo "备份旧目录..."
+        sudo mv "$APP_DIR" "${APP_DIR}.bak.$(date +%s)"
+    fi
+    sudo mkdir -p "$APP_DIR"
+    sudo chown -R "$USER:$USER" "$APP_DIR"
+    git clone https://github.com/zhangliankun/baby-tracker.git "$APP_DIR"
+fi
+
 sudo mkdir -p /var/log/baby-tracker
-sudo chown -R $USER:$USER "$APP_DIR"
-sudo chown -R $USER:$USER /var/log/baby-tracker
+sudo chown -R "$USER:$USER" /var/log/baby-tracker
 
 # ---- 6. 安装依赖 & 构建 ----
 echo -e "${YELLOW}[6/8] 安装依赖 & 构建...${NC}"
-
-# 如果当前脚本目录有代码则复制，否则提示
-SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-if [ "$SCRIPT_DIR" != "$APP_DIR" ]; then
-    echo "复制项目文件到 $APP_DIR ..."
-    sudo cp -r "$SCRIPT_DIR"/* "$APP_DIR/"
-    sudo chown -R $USER:$USER "$APP_DIR"
-fi
 
 # 后端
 cd "$APP_DIR/backend"
@@ -92,7 +103,7 @@ sudo ln -sf /etc/nginx/sites-available/baby-tracker /etc/nginx/sites-enabled/bab
 
 # 测试配置
 if sudo nginx -t 2>&1; then
-    sudo systemctl restart nginx
+    sudo systemctl reload nginx
     echo -e "${GREEN}Nginx 配置成功${NC}"
 else
     echo -e "${RED}Nginx 配置有误，请检查${NC}"
@@ -107,9 +118,16 @@ pm2 start ecosystem.config.js
 pm2 save
 
 # 设置 PM2 开机自启
-if ! pm2 startup 2>/dev/null | grep -q "already"; then
-    pm2 startup
-    echo -e "${YELLOW}请运行上面输出的 sudo 命令以启用 PM2 开机自启${NC}"
+pm2 startup 2>/dev/null | grep "sudo" | bash 2>/dev/null || true
+
+# ---- 9. 健康检查 ----
+echo -e "${YELLOW}等待服务启动...${NC}"
+sleep 3
+HTTP_CODE=$(curl -s -o /dev/null -w '%{http_code}' http://localhost:3001/api/health 2>/dev/null || echo "000")
+if [ "$HTTP_CODE" = "200" ]; then
+    echo -e "${GREEN}✅ 健康检查通过${NC}"
+else
+    echo -e "${RED}❌ 健康检查失败 (HTTP $HTTP_CODE)，请查看日志: pm2 logs baby-tracker${NC}"
 fi
 
 # ---- 完成 ----
