@@ -69,7 +69,7 @@
 | 层 | 技术 |
 |----|------|
 | 前端 | React 18 + Vite + Tailwind CSS + recharts + date-fns + axios + lucide-react + react-mobile-picker |
-| 后端 | Node.js 18+ + Express + sql.js (SQLite WASM) + JWT + bcryptjs |
+| 后端 | Node.js 18+ + Express + better-sqlite3 + JWT + bcryptjs |
 | 部署 | Nginx + PM2 + Ubuntu 22.04 + Google Cloud (2c1g) |
 
 ## 关键设计决策
@@ -79,7 +79,7 @@
 | 多用户模型 | 家庭共享模式 | 引入 Family 表，邀请码机制 |
 | JWT 策略 | 永不过期 | 简化用户体验 |
 | 睡眠计时器 | 后端持久化（sleep_timer API） | 关页面/刷新后仍保持计时状态 |
-| 数据库 | sql.js (SQLite WASM) | 跨平台无需编译，生产 Ubuntu 同样运行 |
+| 数据库 | better-sqlite3 + WAL 模式 | 同步 API，真实 WAL，实时写盘 |
 | 密码加密 | bcryptjs | 纯 JS 实现，跨平台 |
 | UI 色系 | 柔和暖色（柔粉橘+暖黄 #FF9A8B） | 母婴场景亲和力 |
 | 时间选择器 | react-mobile-picker（底部滚轮） | 移动端原生体验 |

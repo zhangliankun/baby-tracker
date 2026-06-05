@@ -7,7 +7,7 @@
 | 层 | 技术 |
 |----|------|
 | 前端 | React 18 + Vite + Tailwind CSS + recharts + date-fns + axios + lucide-react |
-| 后端 | Node.js 18 + Express + sql.js (SQLite WASM) + JWT + bcryptjs |
+| 后端 | Node.js 18+ + Express + better-sqlite3 + JWT + bcryptjs |
 | 部署 | Nginx + PM2 + Ubuntu 22.04 |
 
 ## 功能
