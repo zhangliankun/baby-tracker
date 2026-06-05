@@ -361,33 +361,4 @@ router.delete('/:id', async (req, res) => {
   }
 });
 
-/**
- * DELETE /api/records/all
- * 清空当前家庭所有记录（需二次确认）
- */
-router.delete('/all', async (req, res) => {
-  try {
-    const { confirm } = req.body;
-
-    if (confirm !== true) {
-      return res.status(400).json({ success: false, error: '请在请求体中传入 confirm: true 确认清空操作' });
-    }
-
-    await getDb();
-
-    // 统计数量
-    const count = queryOne('SELECT COUNT(*) as cnt FROM records WHERE family_id = ?', [req.user.familyId]);
-
-    run('DELETE FROM records WHERE family_id = ?', [req.user.familyId]);
-    saveNow();
-
-    console.log(`[Records] 清空记录: 家庭 ${req.user.familyId}, 共 ${count.cnt} 条`);
-
-    return res.status(200).json({ success: true, data: { deletedCount: count.cnt } });
-  } catch (err) {
-    console.error('[Records] 清空错误:', err);
-    return res.status(500).json({ success: false, error: '服务器内部错误' });
-  }
-});
-
 module.exports = router;

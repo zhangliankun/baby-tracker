@@ -256,43 +256,5 @@ router.get('/', async (req, res) => {
         },
       },
     });
-    return res.status(200).json({
-      success: true,
-      data: {
-        period,
-        startDate: startStr,
-        endDate: endStr,
-        feeding: {
-          totalMl: feedingTotalMl,
-          avgDailyMl: Math.round(feedingTotalMl / feedingDays),
-          byType: feedingByType,
-          dailyBreakdown: dailyFeedingBreakdown,
-        },
-        sleep: {
-          totalMinutes: sleepTotalMinutes,
-          totalHours: Math.round(sleepTotalMinutes / 6) / 10, // 保留1位小数
-          avgDailyMinutes: Math.round(sleepTotalMinutes / sleepDays),
-          avgDailyHours: Math.round(sleepTotalMinutes / sleepDays / 6) / 10,
-          dailyBreakdown: dailySleepBreakdown,
-        },
-        diaper: {
-          totalCount: diaperTotalCount,
-          peeCount: actualPeeCount,
-          poopCount,
-          poopColorDistribution: poopColorDist,
-          poopShapeDistribution: poopShapeDist,
-          redButtCount,
-        },
-        supplement: {
-          totalCount: supplementTotalCount,
-          byName: suppByName,
-        },
-      },
-    });
-  } catch (err) {
-    console.error('[Statistics] 查询错误:', err);
-    return res.status(500).json({ success: false, error: '服务器内部错误' });
-  }
-});
 
 module.exports = router;

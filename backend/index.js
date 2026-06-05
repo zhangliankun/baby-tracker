@@ -38,6 +38,16 @@ const limiter = rateLimit({
 });
 app.use(limiter);
 
+// Auth 接口严格限流：15 分钟最多 20 次登录/注册尝试
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 20,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { success: false, error: '登录尝试过于频繁，请 15 分钟后再试' },
+});
+app.use('/api/auth', authLimiter);
+
 // 健康检查（无需认证）
 app.get('/api/health', (req, res) => {
   res.json({ success: true, data: { status: 'ok', timestamp: Date.now() } });

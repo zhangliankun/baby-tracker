@@ -5,36 +5,38 @@ const path = require('path');
 const DB_PATH = path.join(__dirname, 'baby-tracker.db');
 
 let db = null;
+let dbReady = null;  // Promise guard to prevent race condition
 let saveTimer = null;
 
 /**
  * 获取数据库实例（异步，首次调用时初始化）
+ * 使用 Promise guard 防止竞态条件：多个并发请求共享同一个初始化 Promise
  */
 async function getDb() {
   if (db) return db;
+  if (dbReady) return dbReady;
 
-  const SQL = await initSqlJs();
+  dbReady = (async () => {
+    const SQL = await initSqlJs();
 
-  // 尝试从磁盘加载已有数据库
-  if (fs.existsSync(DB_PATH)) {
-    const fileBuffer = fs.readFileSync(DB_PATH);
-    db = new SQL.Database(fileBuffer);
-    console.log('[DB] 从磁盘加载已有数据库');
-  } else {
-    db = new SQL.Database();
-    console.log('[DB] 创建新数据库');
-  }
+    if (fs.existsSync(DB_PATH)) {
+      const fileBuffer = fs.readFileSync(DB_PATH);
+      db = new SQL.Database(fileBuffer);
+      console.log('[DB] 从磁盘加载已有数据库');
+    } else {
+      db = new SQL.Database();
+      console.log('[DB] 创建新数据库');
+    }
 
-  // 开启 WAL 模式需要文件系统支持，sql.js 使用内存DB
-  // 但我们可以执行 pragma 优化
-  db.run('PRAGMA foreign_keys = ON');
+    db.run('PRAGMA foreign_keys = ON');
 
-  // 自动建表
-  createTables(db);
+    createTables(db);
 
-  console.log('[DB] SQLite 数据库初始化完成');
+    console.log('[DB] SQLite 数据库初始化完成');
+    return db;
+  })();
 
-  return db;
+  return dbReady;
 }
 
 function createTables(database) {
@@ -118,26 +120,34 @@ function createTables(database) {
 function scheduleSave() {
   if (saveTimer) clearTimeout(saveTimer);
   saveTimer = setTimeout(() => {
-    if (db) {
-      const data = db.export();
-      const buffer = Buffer.from(data);
-      fs.writeFileSync(DB_PATH, buffer);
+    try {
+      if (db) {
+        const data = db.export();
+        const buffer = Buffer.from(data);
+        fs.writeFileSync(DB_PATH, buffer);
+      }
+    } catch (err) {
+      console.error('[DB] 自动保存失败:', err.message);
     }
   }, 1000);
 }
 
 /**
- * 立即保存数据库到磁盘
+ * 立即保存数据库到磁盘（带错误处理）
  */
 function saveNow() {
   if (saveTimer) {
     clearTimeout(saveTimer);
     saveTimer = null;
   }
-  if (db) {
-    const data = db.export();
-    const buffer = Buffer.from(data);
-    fs.writeFileSync(DB_PATH, buffer);
+  try {
+    if (db) {
+      const data = db.export();
+      const buffer = Buffer.from(data);
+      fs.writeFileSync(DB_PATH, buffer);
+    }
+  } catch (err) {
+    console.error('[DB] 保存失败:', err.message);
   }
 }
 
@@ -147,13 +157,16 @@ function saveNow() {
  */
 function queryAll(sql, params = []) {
   const stmt = db.prepare(sql);
-  if (params.length > 0) stmt.bind(params);
-  const results = [];
-  while (stmt.step()) {
-    results.push(stmt.getAsObject());
+  try {
+    if (params.length > 0) stmt.bind(params);
+    const results = [];
+    while (stmt.step()) {
+      results.push(stmt.getAsObject());
+    }
+    return results;
+  } finally {
+    stmt.free();
   }
-  stmt.free();
-  return results;
 }
 
 /**
