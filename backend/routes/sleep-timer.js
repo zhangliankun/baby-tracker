@@ -1,6 +1,6 @@
 const express = require('express');
 const { v4: uuidv4 } = require('uuid');
-const { getDb, queryAll, queryOne, run, saveNow } = require('../db');
+const { getDb, queryAll, queryOne, run } = require('../db');
 const { authMiddleware } = require('../middleware/auth');
 
 const router = express.Router();
@@ -12,7 +12,7 @@ router.use(authMiddleware);
  */
 router.post('/start', async (req, res) => {
   try {
-    await getDb();
+    getDb();
     const familyId = req.user.familyId;
     const now = Date.now();
 
@@ -31,7 +31,6 @@ router.post('/start', async (req, res) => {
       'INSERT INTO sleep_timer (id, family_id, user_id, start_time, status, created_at) VALUES (?, ?, ?, ?, ?, ?)',
       [id, familyId, req.user.userId, now, 'running', now]
     );
-    saveNow();
 
     console.log(`[SleepTimer] 开始计时: ${id} (家庭 ${familyId}, 用户 ${req.user.role})`);
 
@@ -51,7 +50,7 @@ router.post('/start', async (req, res) => {
  */
 router.post('/stop', async (req, res) => {
   try {
-    await getDb();
+    getDb();
     const familyId = req.user.familyId;
     const now = Date.now();
 
@@ -70,7 +69,6 @@ router.post('/stop', async (req, res) => {
       "UPDATE sleep_timer SET status = 'stopped' WHERE id = ?",
       [timer.id]
     );
-    saveNow();
 
     console.log(`[SleepTimer] 停止计时: ${timer.id}, 时长 ${durationMinutes} 分钟`);
 
@@ -96,7 +94,7 @@ router.post('/stop', async (req, res) => {
  */
 router.get('/status', async (req, res) => {
   try {
-    await getDb();
+    getDb();
     const familyId = req.user.familyId;
 
     const timer = queryOne(

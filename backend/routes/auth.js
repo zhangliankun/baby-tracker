@@ -1,7 +1,7 @@
 const express = require('express');
 const bcrypt = require('bcryptjs');
 const { v4: uuidv4 } = require('uuid');
-const { getDb, queryOne, run, saveNow } = require('../db');
+const { getDb, queryOne, run } = require('../db');
 const { generateToken } = require('../middleware/auth');
 const { generateInviteCode } = require('../utils/invite');
 
@@ -28,7 +28,7 @@ router.post('/register', async (req, res) => {
       return res.status(400).json({ success: false, error: `角色必须是以下之一：${VALID_ROLES.join('、')}` });
     }
 
-    await getDb();
+    getDb();
     const now = Date.now();
 
     // 检查用户名是否已存在
@@ -87,7 +87,6 @@ router.post('/register', async (req, res) => {
         babyId, familyId, '我的宝宝', todayStr,
       ]);
 
-      saveNow();
       console.log(`[Auth] 新建家庭: ${familyName.trim()} (${familyId}), 邀请码: ${resultInviteCode}`);
     } else {
       return res.status(400).json({ success: false, error: '请提供家庭名称（创建新家庭）或邀请码（加入家庭）' });
@@ -99,7 +98,6 @@ router.post('/register', async (req, res) => {
       userId, familyId, username.trim(), hashedPassword, role, now,
     ]);
 
-    saveNow();
 
     // 查询婴儿档案
     const baby = queryOne('SELECT id, nickname, birth_date FROM babies WHERE family_id = ?', [familyId]);
@@ -136,7 +134,7 @@ router.post('/login', async (req, res) => {
       return res.status(400).json({ success: false, error: '请输入用户名和密码' });
     }
 
-    await getDb();
+    getDb();
 
     // 查询用户
     const user = queryOne('SELECT id, family_id, username, password, role FROM users WHERE username = ?', [username.trim()]);

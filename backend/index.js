@@ -64,7 +64,7 @@ app.use('/api/statistics', statisticsRoutes);
 const { getDb, queryAll } = require('./db');
 app.get('/api/export', require('./middleware/auth').authMiddleware, async (req, res) => {
   try {
-    await getDb();
+    getDb();
     const records = queryAll(
       'SELECT id, user_role, type, timestamp, data_json, created_at FROM records WHERE family_id = ? ORDER BY timestamp ASC',
       [req.user.familyId]

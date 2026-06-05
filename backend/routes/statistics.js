@@ -52,7 +52,7 @@ router.get('/', async (req, res) => {
     const startTs = startDate.getTime();
     const endTs = new Date(endStr + 'T23:59:59.999').getTime();
 
-    await getDb();
+    getDb();
     const familyId = req.user.familyId;
 
     // 构建角色过滤条件

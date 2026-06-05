@@ -1,5 +1,5 @@
 const express = require('express');
-const { getDb, queryOne, run, saveNow } = require('../db');
+const { getDb, queryOne, run } = require('../db');
 const { authMiddleware } = require('../middleware/auth');
 
 const router = express.Router();
@@ -13,7 +13,7 @@ router.use(authMiddleware);
  */
 router.get('/', async (req, res) => {
   try {
-    await getDb();
+    getDb();
     const baby = queryOne('SELECT id, nickname, birth_date FROM babies WHERE family_id = ?', [req.user.familyId]);
 
     if (!baby) {
@@ -56,7 +56,7 @@ router.put('/', async (req, res) => {
       return res.status(400).json({ success: false, error: '出生日期不能是未来日期' });
     }
 
-    await getDb();
+    getDb();
 
     // 验证婴儿档案存在
     const existing = queryOne('SELECT id FROM babies WHERE family_id = ?', [req.user.familyId]);
@@ -67,7 +67,6 @@ router.put('/', async (req, res) => {
     run('UPDATE babies SET nickname = ?, birth_date = ? WHERE family_id = ?', [
       nickname.trim(), birthDate, req.user.familyId,
     ]);
-    saveNow();
 
     console.log(`[Baby] 更新婴儿档案: ${nickname.trim()} ${birthDate} (家庭 ${req.user.familyId})`);
 

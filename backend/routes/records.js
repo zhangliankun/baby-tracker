@@ -1,6 +1,6 @@
 const express = require('express');
 const { v4: uuidv4 } = require('uuid');
-const { getDb, queryAll, queryOne, run, saveNow } = require('../db');
+const { getDb, queryAll, queryOne, run } = require('../db');
 const { authMiddleware } = require('../middleware/auth');
 
 const router = express.Router();
@@ -126,7 +126,7 @@ function validateData(type, data) {
  */
 router.get('/', async (req, res) => {
   try {
-    await getDb();
+    getDb();
     const { date, startDate, endDate } = req.query;
     const familyId = req.user.familyId;
 
@@ -200,12 +200,11 @@ router.delete('/all', async (req, res) => {
       return res.status(400).json({ success: false, error: '请在请求体中传入 confirm: true 确认清空操作' });
     }
 
-    await getDb();
+    getDb();
 
     const count = queryOne('SELECT COUNT(*) as cnt FROM records WHERE family_id = ?', [req.user.familyId]);
 
     run('DELETE FROM records WHERE family_id = ?', [req.user.familyId]);
-    saveNow();
 
     console.log('[Records] 清空记录: 家庭 ' + req.user.familyId + ', 共 ' + count.cnt + ' 条');
 
@@ -242,7 +241,7 @@ router.post('/', async (req, res) => {
       return res.status(400).json({ success: false, error: dataErr });
     }
 
-    await getDb();
+    getDb();
     const now = Date.now();
     const id = uuidv4();
     const dataJson = JSON.stringify(data);
@@ -251,7 +250,6 @@ router.post('/', async (req, res) => {
       'INSERT INTO records (id, family_id, user_id, user_role, type, timestamp, data_json, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
       [id, req.user.familyId, req.user.userId, req.user.role, type, timestamp, dataJson, now]
     );
-    saveNow();
 
     const record = {
       id,
@@ -293,7 +291,7 @@ router.put('/:id', async (req, res) => {
       return res.status(400).json({ success: false, error: dataErr });
     }
 
-    await getDb();
+    getDb();
 
     // 验证记录存在且属于当前家庭
     const existing = queryOne('SELECT id, family_id FROM records WHERE id = ?', [id]);
@@ -310,7 +308,6 @@ router.put('/:id', async (req, res) => {
       'UPDATE records SET type = ?, timestamp = ?, data_json = ? WHERE id = ?',
       [type, timestamp, dataJson, id]
     );
-    saveNow();
 
     const updated = {
       id,
@@ -339,7 +336,7 @@ router.delete('/:id', async (req, res) => {
   try {
     const { id } = req.params;
 
-    await getDb();
+    getDb();
 
     const existing = queryOne('SELECT id, family_id FROM records WHERE id = ?', [id]);
     if (!existing) {
@@ -350,7 +347,6 @@ router.delete('/:id', async (req, res) => {
     }
 
     run('DELETE FROM records WHERE id = ?', [id]);
-    saveNow();
 
     console.log(`[Records] 删除记录: ${id}`);
 
