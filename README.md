@@ -36,7 +36,7 @@ baby-tracker/
 │   ├── routes/            # auth, baby, records, sleep-timer, statistics
 │   ├── middleware/         # JWT 认证
 │   ├── utils/             # 邀请码生成
-│   ├── db.js              # SQLite 初始化 + 防抖持久化
+│   ├── db.js              # better-sqlite3 数据库初始化
 │   ├── index.js           # 入口
 │   └── package.json
 ├── docs/                  # 项目文档
