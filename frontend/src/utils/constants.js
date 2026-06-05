@@ -11,6 +11,7 @@ export const RECORD_TYPES = {
   sleep: { label: '睡眠', icon: 'Moon', color: '#7B8CDE' },
   diaper: { label: '尿布', icon: 'StickyNote', color: '#FFB347' },
   supplement: { label: '补剂', icon: 'Pill', color: '#4ECDC4' },
+  'solid-food': { label: '辅食', icon: 'Apple', color: '#FF8C42' },
 };
 
 /**
@@ -68,3 +69,30 @@ export const STATS_PERIODS = [
   { value: 'week', label: '本周' },
   { value: 'month', label: '本月' },
 ];
+
+/**
+ * 辅食种类预设
+ */
+export const FOOD_NAMES = [
+  '米粉', '果泥', '菜泥', '肉泥', '蛋黄', '面条', '粥',
+  '水果', '蔬菜', '鱼泥', '肝泥', '酸奶', '溶豆', '磨牙棒',
+];
+
+/**
+ * 辅食份量预设（g）
+ */
+export const AMOUNT_G_PRESETS = [5, 10, 15, 20, 30, 50];
+
+/**
+ * 预设过敏食物（18种）
+ */
+export const ALLERGY_FOODS = [
+  '牛奶', '酸奶', '奶酪', '蛋黄', '鸡蛋', '虾', '贝柱', '鳕鱼',
+  '三文鱼', '龙利鱼', '银鱼', '鲈鱼', '豆腐', '腐竹', '芝麻',
+  '核桃', '板栗', '面粉',
+];
+
+/**
+ * 预设过敏症状（可多选）
+ */
+export const ALLERGY_SYMPTOMS = ['皮疹', '呕吐', '腹泻'];

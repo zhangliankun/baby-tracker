@@ -1,11 +1,12 @@
 import { useState } from 'react';
-import { Plus, X, Milk, Moon, StickyNote, Pill } from 'lucide-react';
+import { Plus, X, Milk, Moon, StickyNote, Pill, Apple } from 'lucide-react';
 
 const actions = [
   { type: 'feeding', label: '喂养', Icon: Milk, color: '#FF9A8B' },
   { type: 'sleep', label: '睡眠', Icon: Moon, color: '#7B8CDE' },
   { type: 'diaper', label: '尿布', Icon: StickyNote, color: '#FFB347' },
   { type: 'supplement', label: '补剂', Icon: Pill, color: '#4ECDC4' },
+  { type: 'solid-food', label: '辅食', Icon: Apple, color: '#FF8C42' },
 ];
 
 export default function FloatingAddBtn({ onSelect }) {

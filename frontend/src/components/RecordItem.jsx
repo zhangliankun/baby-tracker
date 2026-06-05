@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
-import { Milk, Moon, StickyNote, Pill, Pencil, Trash2, Square } from 'lucide-react';
+import { Milk, Moon, StickyNote, Pill, Apple, Pencil, Trash2, Square } from 'lucide-react';
 import { formatTime } from '../utils/date';
 import { getRecordSummary, getRecordSubtitle, isSleepRunning, formatElapsed } from '../utils/format';
 
@@ -8,6 +8,7 @@ const iconMap = {
   sleep: { Icon: Moon, bg: 'bg-type-sleep/10' },
   diaper: { Icon: StickyNote, bg: 'bg-type-diaper/10' },
   supplement: { Icon: Pill, bg: 'bg-type-supplement/10' },
+  'solid-food': { Icon: Apple, bg: 'bg-type-supplement/10' },
 };
 
 export default function RecordItem({ record, onEdit, onDelete, onWakeUp }) {

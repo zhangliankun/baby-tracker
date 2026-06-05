@@ -8,7 +8,7 @@ const router = express.Router();
 // /all 路由必须在 /:id 之前注册，否则 Express 会把 "all" 当作 :id 参数
 router.use(authMiddleware);
 
-const VALID_TYPES = ['feeding', 'sleep', 'diaper', 'supplement'];
+const VALID_TYPES = ['feeding', 'sleep', 'diaper', 'supplement', 'solid-food'];
 const FEEDING_TYPES = ['formula', 'breast', 'bottle_breast'];
 const POOP_COLORS = ['yellow', 'yellow-green', 'dark-green', 'green-brown', 'pale-yellow', 'dark-brown'];
 const POOP_SHAPES = ['paste', 'dry-thick', 'cream', 'milk-curd', 'watery', 'foamy'];
@@ -89,6 +89,24 @@ function validateSupplementData(data) {
 }
 
 /**
+ * 验证辅食记录数据
+ */
+function validateSolidFoodData(data) {
+  if (!data || !data.foodName || typeof data.foodName !== 'string' || data.foodName.trim().length === 0) {
+    return '请填写食物名称';
+  }
+  if (!data.amountG || typeof data.amountG !== 'number' || data.amountG <= 0 || data.amountG > 9999) {
+    return '份量必须是 1-9999 的正整数';
+  }
+  if (data.startTime && typeof data.startTime !== 'number') return '开始时间格式不正确';
+  if (data.endTime && typeof data.endTime !== 'number') return '结束时间格式不正确';
+  if (data.startTime && data.endTime && data.startTime >= data.endTime) {
+    return '开始时间必须早于结束时间';
+  }
+  return null;
+}
+
+/**
  * 根据 type 验证 data_json
  */
 function validateData(type, data) {
@@ -97,6 +115,7 @@ function validateData(type, data) {
     case 'sleep': return validateSleepData(data);
     case 'diaper': return validateDiaperData(data);
     case 'supplement': return validateSupplementData(data);
+    case 'solid-food': return validateSolidFoodData(data);
     default: return '未知的记录类型';
   }
 }

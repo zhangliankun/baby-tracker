@@ -292,8 +292,27 @@ Content-Type: application/json
 }
 ```
 
+// 辅食（可选过敏信息）
+{
+  "type": "solid-food",
+  "timestamp": 1717488000000,
+  "data": {
+    "foodName": "米粉",
+    "amountG": 15,
+    "startTime": 1717488000000,
+    "endTime": 1717489200000,
+    "remark": "第一次尝试",
+    "allergy": {
+      "foods": ["蛋黄"],
+      "symptoms": ["皮疹"],
+      "note": "吃完半小时后脸上起了小红点"
+    }
+  }
+}
+```
+
 **验证规则**：
-- type: 必填，`feeding | sleep | diaper | supplement`
+- type: 必填，`feeding | sleep | diaper | supplement | solid-food`
 - timestamp: 必填，正整数（毫秒时间戳）
 - data: 必填，JSON 对象，结构根据 type 不同
 
@@ -302,6 +321,7 @@ Content-Type: application/json
 - sleep: startTime 必填，endTime 可选（计时中），若有 endTime 则 startTime < endTime；remark 可选
 - diaper: pee 和 poop 不能同时为 false；若 poop=true，须提供 poopColor 和 poopShape
 - supplement: 新格式 supplements 数组（至少一项，每项 name+ dose 必填）或旧格式 {name, dose} 兼容；remark 可选
+- solid-food: foodName 必填，amountG > 0 必填；startTime/endTime 可选；allergy 对象可选（foods 数组 + symptoms 数组 + note 字符串）
 
 **成功响应 (201)**：
 ```json

@@ -174,7 +174,88 @@ router.get('/', async (req, res) => {
       }
     }
 
+    // --- 辅食统计 ---
+    const solidFoodRecords = queryAll(
+      `SELECT data_json, timestamp FROM records WHERE ${baseWhere} AND type = 'solid-food'`,
+      params
+    );
+
+    const solidFoodByName = {};
+    const solidFoodAllergyFoods = {};
+    const solidFoodAllergySymptoms = {};
+    let solidFoodTotalCount = 0;
+    let solidFoodAllergyCount = 0;
+    const solidFoodDays = new Set();
+
+    for (const r of solidFoodRecords) {
+      const d = JSON.parse(r.data_json);
+      solidFoodTotalCount++;
+      const dayKey = new Date(r.timestamp).toISOString().split('T')[0];
+      solidFoodDays.add(dayKey);
+
+      const name = (d.foodName || '').trim();
+      if (name) solidFoodByName[name] = (solidFoodByName[name] || 0) + 1;
+
+      if (d.allergy && d.allergy.foods && d.allergy.foods.length > 0) {
+        solidFoodAllergyCount++;
+        for (const f of d.allergy.foods) {
+          const key = f.trim();
+          if (key) solidFoodAllergyFoods[key] = (solidFoodAllergyFoods[key] || 0) + 1;
+        }
+        if (d.allergy.symptoms) {
+          for (const s of d.allergy.symptoms) {
+            const key = s.trim();
+            if (key) solidFoodAllergySymptoms[key] = (solidFoodAllergySymptoms[key] || 0) + 1;
+          }
+        }
+      }
+    }
+
+    const sfDays = solidFoodDays.size || 1;
+
     // --- 构建响应 ---
+    return res.status(200).json({
+      success: true,
+      data: {
+        period,
+        startDate: startStr,
+        endDate: endStr,
+        feeding: {
+          totalMl: feedingTotalMl,
+          avgDailyMl: Math.round(feedingTotalMl / feedingDays),
+          byType: feedingByType,
+          dailyBreakdown: dailyFeedingBreakdown,
+        },
+        sleep: {
+          totalMinutes: sleepTotalMinutes,
+          totalHours: Math.round(sleepTotalMinutes / 6) / 10,
+          avgDailyMinutes: Math.round(sleepTotalMinutes / sleepDays),
+          avgDailyHours: Math.round(sleepTotalMinutes / sleepDays / 6) / 10,
+          dailyBreakdown: dailySleepBreakdown,
+        },
+        diaper: {
+          totalCount: diaperTotalCount,
+          peeCount: actualPeeCount,
+          poopCount,
+          poopColorDistribution: poopColorDist,
+          poopShapeDistribution: poopShapeDist,
+          redButtCount,
+        },
+        supplement: {
+          totalCount: supplementTotalCount,
+          byName: suppByName,
+        },
+        'solid-food': {
+          totalCount: solidFoodTotalCount,
+          varietyCount: Object.keys(solidFoodByName).length,
+          avgDailyCount: Math.round(solidFoodTotalCount / sfDays),
+          byName: solidFoodByName,
+          allergyCount: solidFoodAllergyCount,
+          allergyFoods: solidFoodAllergyFoods,
+          allergySymptoms: solidFoodAllergySymptoms,
+        },
+      },
+    });
     return res.status(200).json({
       success: true,
       data: {

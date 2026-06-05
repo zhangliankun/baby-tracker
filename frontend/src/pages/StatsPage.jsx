@@ -7,6 +7,7 @@ import FeedingStats from '../components/FeedingStats';
 import SleepStats from '../components/SleepStats';
 import DiaperStats from '../components/DiaperStats';
 import SupplementStats from '../components/SupplementStats';
+import SolidFoodStats from '../components/SolidFoodStats';
 import LoadingSpinner from '../components/LoadingSpinner';
 
 export default function StatsPage() {
@@ -83,6 +84,7 @@ export default function StatsPage() {
           <SleepStats data={stats.sleep} />
           <DiaperStats data={stats.diaper} />
           <SupplementStats data={stats.supplement} />
+          <SolidFoodStats data={stats['solid-food']} />
         </div>
       ) : (
         <p className="text-center text-sm text-text-secondary py-8">

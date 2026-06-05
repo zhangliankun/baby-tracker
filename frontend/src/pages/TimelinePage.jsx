@@ -12,6 +12,7 @@ import FeedingForm from '../components/FeedingForm';
 import SleepForm from '../components/SleepForm';
 import DiaperForm from '../components/DiaperForm';
 import SupplementForm from '../components/SupplementForm';
+import SolidFoodForm from '../components/SolidFoodForm';
 import LoadingSpinner from '../components/LoadingSpinner';
 import { Clock } from 'lucide-react';
 
@@ -229,6 +230,8 @@ export default function TimelinePage() {
         return <DiaperForm {...commonProps} initialData={editingRecord} onSubmit={editingRecord ? handleUpdate : handleAdd} />;
       case 'supplement':
         return <SupplementForm {...commonProps} initialData={editingRecord} onSubmit={editingRecord ? handleUpdate : handleAdd} />;
+      case 'solid-food':
+        return <SolidFoodForm {...commonProps} initialData={editingRecord} onSubmit={editingRecord ? handleUpdate : handleAdd} />;
       default:
         return null;
     }

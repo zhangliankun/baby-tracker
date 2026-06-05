@@ -140,6 +140,34 @@ export function getSupplementSummary(data) {
 }
 
 /**
+ * 获取辅食记录摘要
+ */
+export function getSolidFoodSummary(data) {
+  let summary = `${data.foodName} ${data.amountG}g`;
+  if (data.startTime && data.endTime) {
+    const durationMin = Math.round((data.endTime - data.startTime) / 60000);
+    summary += `（${formatDuration(durationMin)}）`;
+  }
+  if (data.allergy && data.allergy.foods && data.allergy.foods.length > 0) {
+    const parts = data.allergy.foods.slice(0, 2);
+    const extra = data.allergy.symptoms && data.allergy.symptoms.length > 0
+      ? '·' + data.allergy.symptoms.join('·') : '';
+    summary += ` ⚠️ ${parts.join('·')}${extra}`;
+  }
+  return summary;
+}
+
+/**
+ * 获取辅食记录副标题
+ */
+export function getSolidFoodSubtitle(data) {
+  if (data.startTime && data.endTime) {
+    return formatTimeRange(data.startTime, data.endTime);
+  }
+  return '';
+}
+
+/**
  * 根据记录类型获取内容摘要
  */
 export function getRecordSummary(type, data) {
@@ -148,6 +176,7 @@ export function getRecordSummary(type, data) {
     case 'sleep': return getSleepSummary(data);
     case 'diaper': return getDiaperSummary(data);
     case 'supplement': return getSupplementSummary(data);
+    case 'solid-food': return getSolidFoodSummary(data);
     default: return '';
   }
 }
@@ -159,6 +188,7 @@ export function getRecordSubtitle(type, data) {
   switch (type) {
     case 'feeding': return getFeedingSubtitle(data);
     case 'sleep': return getSleepSubtitle(data);
+    case 'solid-food': return getSolidFoodSubtitle(data);
     default: return '';
   }
 }
